@@ -1,7 +1,7 @@
 import time
 import ttn
 import os
-
+import datetime
 from Model.application import Application
 from Model.device import Device
 from Model.message import Message
@@ -55,8 +55,9 @@ for device in my_devices:
     # Persist data in database
     session.add(my_device)
 
-print(device_dico.keys())
-print(device_dico.values())
+message_fixture = Message("ttn 2019", "device sample", "serial number", 1, "hello world", datetime.datetime.now())
+session.add(message_fixture)
+
 
 # commit and close session
 session.commit()
@@ -69,13 +70,15 @@ mqtt_client = handler.data()
 # handle the uplink message, record in database
 def uplink_callback(msg, client):
   print(msg)
-  # create device
-    tmp_device = Device(msg.)
-  # add message to device
-  message_device = Message(decoder(msg.payload_raw), msg.metadata.time, device)
-  session.add(message_device)
+  payload = decoder(msg.payload_raw)
+  print("payload value: ", payload)
+  print ("time value: ",msg.metadata.time)
 
-
+  message = Message(msg.app_id, msg.dev_id, msg.hardware_serial, msg.port, payload, msg.metadata.time)
+  session_tmp = Session()
+  session_tmp.add(message)
+  session_tmp.commit()
+  session_tmp.close()
 
 
 

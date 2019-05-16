@@ -28,43 +28,13 @@ class DbManager(object):
 
         Base.metadata.create_all(engine)
 
-    def add_application(self, application):
-        session_local = self.session()
-        session_local.add(application)
-        session_local.commit()
-        session_local.close()
-
-
-    def get_devices(self):
-        session_local = self.session()
-        result = self.session.query(Device).join(Application).all()
-        session_local.commit()
-        session_local.close()
-        return result
-
-    def get_device_by_dev_id(self, dev_id):
-        session_local = self.session()
-        result = self.session.query(Device).join(Application).filter(Device.dev_id == dev_id)
-        session_local.commit()
-        session_local.close()
-        return result
-
-    def update_description_device(self, device, description):
-        session_local = self.session()
-        session_local.query(Device).join(Application).filter(Device.dev_id == device.dev_id).update({Device.description: description}, synchronize_session = False )
-        session_local.commit()
-        session_local.close()
-
-    def add_message(self, message):
-
-
      # Fetch five messages
     def get_messages(self):
-        return self.session.query(Message).join(Device).join(Application).limit(5)
+        return self.session.query(Message).limit(5)
 
     # Fetch message between two datetimes
     def get_messages_between(self, start_date, end_date):
-        return  self.session.query(Message).join(Device).join(Application).filter(Message.release_date >= start_date).filter(Message.release_date <= end_date)
+        return  self.session.query(Message).filter(Message.release_date >= start_date).filter(Message.release_date <= end_date)
 
 
 
