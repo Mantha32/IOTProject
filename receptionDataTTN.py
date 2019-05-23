@@ -2,12 +2,14 @@ import time
 import ttn
 import os
 import datetime
+from datetime import date
 from Model.application import Application
 from Model.device import Device
 from Model.message import Message
 from Configuration.configueApp import app_id, access_key
-from utility import decoder,hex_to_string, iso_to_datetime
+from utility import decoder,hex_to_string, iso_to_datetime, remove_payload_header
 from Model.base import Session, Base, engine
+from dbManager import DbManager
 
 
 # Dictionary of register device
@@ -26,16 +28,9 @@ my_devices = app_client.devices()
 
 my_app_eui = hex_to_string(my_devices[0].lorawan_device.app_eui)
 
-# Create object app
+# Create object app for record databse purpose
 my_app = Application(app_client.app_id, str(my_app_eui))
 
-# Delete database file if it exists currently
-if os.path.exists("ttn.db"):
-    os.remove("ttn.db")
-
-
-# generate database schema
-Base.metadata.create_all(engine)
 
 # create a new session
 session = Session()
@@ -44,6 +39,7 @@ session = Session()
 session.add(my_app)
 
 my_devices = app_client.devices()
+
 # Add all devices  in database
 for device in my_devices:
     # Create device
@@ -55,7 +51,7 @@ for device in my_devices:
     # Persist data in database
     session.add(my_device)
 
-message_fixture = Message("ttn 2019", "device sample", "serial number", 1, "hello world", datetime.datetime.now())
+message_fixture = Message("ttn 2019", "device sample", "serial number", 1, remove_payload_header("ENV#","ENV#hello world"), datetime.datetime.now())
 session.add(message_fixture)
 
 
@@ -65,22 +61,28 @@ session.close()
 
 
 # using mqtt client: handler.data return Mqtt_client() which wraps paho.mqtt.client
-mqtt_client = handler.data()
+# reconnect: boolean whether to automatically reconnect to the MQTT server on unexpected disconnect
+# (useful if you'd like to keep the connection alive for several hours)
+mqtt_client = handler.data(reconnect=True)
 
 # handle the uplink message, record in database
 def uplink_callback(msg, client):
-  print(msg)
-  payload = decoder(msg.payload_raw)
-  print("payload value: ", payload)
-  print ("time value: ",msg.metadata.time)
+    print(msg)
+    payload = decoder(msg.payload_raw)
+    print("payload value: ", payload)
+    print("time value: ",msg.metadata.time)
+    start_payload = "Starting payload..."
+    payload_header = "ENV#"
+    print("timestamp: ", iso_to_datetime(msg.metadata.time))
+    if(start_payload not in payload):
+        if(payload_header in payload):
+            payload = remove_payload_header(payload_header, payload)
 
-  print(type(msg.port))
-
-  message = Message(msg.app_id, msg.dev_id, msg.hardware_serial, msg.port, payload, iso_to_datetime(msg.metadata.time))
-  session_tmp = Session()
-  session_tmp.add(message)
-  session_tmp.commit()
-  session_tmp.close()
+        message = Message(msg.app_id, msg.dev_id, msg.hardware_serial, msg.port, payload, iso_to_datetime(msg.metadata.time))
+        session_tmp = Session()
+        session_tmp.add(message)
+        session_tmp.commit()
+        session_tmp.close()
 
 # Record the message from each running device
 mqtt_client.set_uplink_callback(uplink_callback)
@@ -92,4 +94,23 @@ mqtt_client.connect()
 
 # Manage the loop connexion to the broker
 # MQTT client is based on paho.mqtt.client: We add loop_forever method in ttn lib (ttnmqtt.py) which wraps paho.mqtt.client.loop_forever()
-mqtt_client.loop_forever()
+#mqtt_client.loop_forever()
+
+database_manager = DbManager()
+
+print("get 5 last messages: ")
+result = database_manager.get_messages()
+for row in result:
+    print("id: ",row.id ,"name device:", row.dev_id, "payload" , row.payload , "timestamp: " , row.release_date)
+
+print("get messages for today: ")
+result = database_manager.get_messages(date.today())
+for row in result:
+    print(row)
+
+print("get messages between two day: ")
+result = database_manager.get_messages("2019-05-23 17:30:21", datetime.datetime.now())
+for row in result:
+    print(row)
+
+

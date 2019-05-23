@@ -13,7 +13,12 @@ def hex_to_string(payload):
     byte_to_string = binascii.hexlify(bytearray(payload))
     return byte_to_string.decode('utf-8', 'strict')
 
+# Remove header in the payload
+def remove_payload_header(header, payload):
+    return payload[len(header):]
 
-# Convert ISO datetime to datetime.datetime
+# Convert ISO datetime to datetime.datetime, drop millisecond value
 def iso_to_datetime(dtr_str):
-    return dateutil.parser.parse(dtr_str)
+    my_date = dateutil.parser.parse(dtr_str)
+
+    return my_date
