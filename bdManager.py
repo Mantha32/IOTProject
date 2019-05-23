@@ -37,6 +37,10 @@ class DbManager(object):
         return  self.session.query(Message).filter(Message.release_date >= start_date).filter(Message.release_date <= end_date)
 
 
+    # get message () message for to day
+    # get message (date_str) message from date_str to now
+    # get message (date1, date2)
+
 
 
 

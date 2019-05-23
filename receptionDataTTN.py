@@ -6,7 +6,7 @@ from Model.application import Application
 from Model.device import Device
 from Model.message import Message
 from Configuration.configueApp import app_id, access_key
-from utility import decoder,hex_to_string
+from utility import decoder,hex_to_string, iso_to_datetime
 from Model.base import Session, Base, engine
 
 
@@ -64,7 +64,7 @@ session.commit()
 session.close()
 
 
-# using mqtt client
+# using mqtt client: handler.data return Mqtt_client() which wraps paho.mqtt.client
 mqtt_client = handler.data()
 
 # handle the uplink message, record in database
@@ -74,17 +74,22 @@ def uplink_callback(msg, client):
   print("payload value: ", payload)
   print ("time value: ",msg.metadata.time)
 
-  message = Message(msg.app_id, msg.dev_id, msg.hardware_serial, msg.port, payload, msg.metadata.time)
+  print(type(msg.port))
+
+  message = Message(msg.app_id, msg.dev_id, msg.hardware_serial, msg.port, payload, iso_to_datetime(msg.metadata.time))
   session_tmp = Session()
   session_tmp.add(message)
   session_tmp.commit()
   session_tmp.close()
 
-
-
 # Record the message from each running device
 mqtt_client.set_uplink_callback(uplink_callback)
-mqtt_client.connect()
-time.sleep(60)
-mqtt_client.close()
 
+
+mqtt_client.start()
+
+mqtt_client.connect()
+
+# Manage the loop connexion to the broker
+# MQTT client is based on paho.mqtt.client: We add loop_forever method in ttn lib (ttnmqtt.py) which wraps paho.mqtt.client.loop_forever()
+mqtt_client.loop_forever()
