@@ -27,7 +27,20 @@ class DbManager(object):
 
         Base.metadata.create_all(engine)
 
-     # Fetch five messages
+    #record in db
+    def add(self, record):
+        self.session.add(record)
+
+    def commit(self):
+        self.session.commit()
+
+    def session_off(self):
+        self.session.close()
+
+    def session_on(self):
+        self.session = Session()
+
+    # Fetch five messages
     def get_messages(self):
         return self.session.query(Message).order_by(Message.id.desc()).limit(5)
 

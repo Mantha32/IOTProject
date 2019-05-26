@@ -96,6 +96,7 @@ mqtt_client.connect()
 # MQTT client is based on paho.mqtt.client: We add loop_forever method in ttn lib (ttnmqtt.py) which wraps paho.mqtt.client.loop_forever()
 #mqtt_client.loop_forever()
 
+# check out the database API
 database_manager = DbManager()
 
 print("get 5 last messages: ")
@@ -103,14 +104,16 @@ result = database_manager.get_messages()
 for row in result:
     print("id: ",row.id ,"name device:", row.dev_id, "payload" , row.payload , "timestamp: " , row.release_date)
 
+'''
 print("get messages for today: ")
 result = database_manager.get_messages(date.today())
 for row in result:
-    print(row)
+    print("id: ",row.id ,"name device:", row.dev_id, "payload" , row.payload , "timestamp: " , row.release_date)
 
 print("get messages between two day: ")
 result = database_manager.get_messages("2019-05-23 17:30:21", datetime.datetime.now())
 for row in result:
-    print(row)
+    print("id: ", row.id, "name device:", row.dev_id, "payload", row.payload, "timestamp: ", row.release_date)
 
 
+'''
