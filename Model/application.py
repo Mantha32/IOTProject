@@ -8,7 +8,6 @@ Param:
     app_eui:
 """
 
-
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 from Model.base import Base
@@ -30,6 +29,3 @@ class Application(Base):
 
     def get_name(self):
         return self.app_id
-
-
-

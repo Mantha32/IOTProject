@@ -7,14 +7,13 @@ from Model.application import Application
 from Model.device import Device
 from Model.message import Message
 from Configuration.configueApp import app_id, access_key
-from utility import decoder,hex_to_string, iso_to_datetime, remove_payload_header
+from utility import decoder, hex_to_string, iso_to_datetime, remove_payload_header
 from Model.base import Session, Base, engine
 from dbManager import DbManager
 
 
 # Dictionary of register device
 device_dico = {}
-
 
 handler = ttn.HandlerClient(app_id, access_key)
 
@@ -51,7 +50,8 @@ for device in my_devices:
     # Persist data in database
     session.add(my_device)
 
-message_fixture = Message("ttn 2019", "device sample", "serial number", 1, remove_payload_header("ENV#","ENV#hello world"), datetime.datetime.now())
+message_fixture = Message(device_dico["lora_marc_b-1"], 1,
+                          remove_payload_header("ENV#", "ENV#hello world"), datetime.datetime.now())
 session.add(message_fixture)
 
 
@@ -66,11 +66,13 @@ session.close()
 mqtt_client = handler.data(reconnect=True)
 
 # handle the uplink message, record in database
+
+
 def uplink_callback(msg, client):
     print(msg)
     payload = decoder(msg.payload_raw)
     print("payload value: ", payload)
-    print("time value: ",msg.metadata.time)
+    print("time value: ", msg.metadata.time)
     start_payload = "Starting payload..."
     payload_header = "ENV#"
     print("timestamp: ", iso_to_datetime(msg.metadata.time))
@@ -78,11 +80,13 @@ def uplink_callback(msg, client):
         if(payload_header in payload):
             payload = remove_payload_header(payload_header, payload)
 
-        message = Message(msg.app_id, msg.dev_id, msg.hardware_serial, msg.port, payload, iso_to_datetime(msg.metadata.time))
+        message = Message(msg.device,
+                          msg.port, payload, iso_to_datetime(msg.metadata.time))
         session_tmp = Session()
         session_tmp.add(message)
         session_tmp.commit()
         session_tmp.close()
+
 
 # Record the message from each running device
 mqtt_client.set_uplink_callback(uplink_callback)
@@ -94,26 +98,25 @@ mqtt_client.connect()
 
 # Manage the loop connexion to the broker
 # MQTT client is based on paho.mqtt.client: We add loop_forever method in ttn lib (ttnmqtt.py) which wraps paho.mqtt.client.loop_forever()
-#mqtt_client.loop_forever()
+# mqtt_client.loop_forever()
 
-# check out the database API
 database_manager = DbManager()
 
 print("get 5 last messages: ")
 result = database_manager.get_messages()
 for row in result:
-    print("id: ",row.id ,"name device:", row.dev_id, "payload" , row.payload , "timestamp: " , row.release_date)
+    print("id: ", row.id, "name device:", row.dev_id, "payload",
+          row.payload, "timestamp: ", row.release_date)
 
-'''
 print("get messages for today: ")
-result = database_manager.get_messages(date.today())
+result = database_manager.get_messages_from(date.today())
 for row in result:
-    print("id: ",row.id ,"name device:", row.dev_id, "payload" , row.payload , "timestamp: " , row.release_date)
+    print("id: ", row.id, "name device:", row.dev_id, "payload",
+          row.payload, "timestamp: ", row.release_date)
 
 print("get messages between two day: ")
-result = database_manager.get_messages("2019-05-23 17:30:21", datetime.datetime.now())
+result = database_manager.get_messages_between(
+    "2019-06-01 10:00:01", datetime.datetime.now())
 for row in result:
-    print("id: ", row.id, "name device:", row.dev_id, "payload", row.payload, "timestamp: ", row.release_date)
-
-
-'''
+    print("id: ", row.id, "name device:", row.dev_id, "payload",
+          row.payload, "timestamp: ", row.release_date)

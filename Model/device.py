@@ -12,7 +12,6 @@ from Model.base import Base
 from sqlalchemy.orm import relationship
 
 
-
 class Device(Base):
     __tablename__ = 'device'
     id = Column(Integer, primary_key=True)
@@ -20,15 +19,16 @@ class Device(Base):
     dev_eui = Column('dev_eui', String(64))  # hardware_serial for the device
     description = Column('description', String)
 
-    app_db_id = Column(Integer, ForeignKey('application.id')) # ref to app id , relationship in db table
-    application = relationship("Application", backref="Device") # relationship many devices to one application
+    # ref to app id , relationship in db table
+    app_id = Column(Integer, ForeignKey('application.id'))
+    # relationship many devices to one application
+    application = relationship("Application", backref="device")
 
     def __init__(self, dev_id, dev_eui, description, my_app):
-        self.dev_id= dev_id
+        self.dev_id = dev_id
         self.dev_eui = dev_eui
         self.description = description
         self.application = my_app
-
 
     def get_name(self):
         return self.dev_id
