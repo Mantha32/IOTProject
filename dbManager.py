@@ -19,28 +19,14 @@ class DbManager(object):
         self.session = Session()
         self.devices = {}
 
-
     def generate_data_base(self):
         # Delete database file if it exists currently
         if os.path.exists("ttn.db"):
-             os.remove("ttn.db")
+            os.remove("ttn.db")
 
         Base.metadata.create_all(engine)
 
-    #record in db
-    def add(self, record):
-        self.session.add(record)
-
-    def commit(self):
-        self.session.commit()
-
-    def session_off(self):
-        self.session.close()
-
-    def session_on(self):
-        self.session = Session()
-
-    # Fetch five messages
+     # Fetch five messages
     def get_messages(self):
         return self.session.query(Message).order_by(Message.id.desc()).limit(5)
 
@@ -50,11 +36,6 @@ class DbManager(object):
 
     #  message from date_str to now
     def get_messages_from(self, date_str):
-        return self.get_messages_between(self, date_str, datetime.datetime.now())
+        return self.get_messages_between(date_str, datetime.datetime.now())
 
     # message for one specifique day
-
-
-
-
-
