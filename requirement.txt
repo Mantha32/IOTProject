@@ -1,3 +1,4 @@
 python-dateutil
 ttn
+flask_sqlalchemy 
 paho-mqtt-1.4.0
