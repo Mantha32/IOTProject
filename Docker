@@ -1,0 +1,5 @@
+FROM python : 3
+WORKDIR /iot
+COPY . /iot
+RUN pip install -r requirement.txt
+CMD ["python", "receptionDataTTN.py"]
